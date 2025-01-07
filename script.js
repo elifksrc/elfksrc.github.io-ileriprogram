@@ -30,9 +30,41 @@ high_score_display.style.fontSize = '20px';
 high_score_display.style.color = 'white';
 document.body.appendChild(high_score_display);
 
-// Yüksek skoru göster
+// Çerez oluşturma fonksiyonu
+function setCookie(name, value, days) {
+    let expires = "";
+    if (days) {
+        let date = new Date();
+        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+        expires = "; expires=" + date.toUTCString();
+    }
+    document.cookie = name + "=" + (value || "") + expires + "; path=/";
+}
+
+// Çerez okuma fonksiyonu
+function getCookie(name) {
+    let nameEQ = name + "=";
+    let ca = document.cookie.split(';');
+    for (let i = 0; i < ca.length; i++) {
+        let c = ca[i];
+        while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+        if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+    }
+    return null;
+}
+
+// Yüksek skoru güncelle
+function updateHighScore(currentScore) {
+    let highScore = parseInt(getCookie('highScore')) || 0;
+    if (currentScore > highScore) {
+        setCookie('highScore', currentScore, 365);
+        high_score_display.innerHTML = `High Score: ${currentScore}`;
+    }
+}
+
+// Sayfa yüklendiğinde yüksek skoru göster
 document.addEventListener('DOMContentLoaded', () => {
-    let highScore = parseInt(localStorage.getItem('highScore')) || 0;
+    let highScore = parseInt(getCookie('highScore')) || 0;
     high_score_display.innerHTML = `High Score: ${highScore}`;
 });
 
@@ -56,15 +88,6 @@ redScreen.style.display = 'none';
 document.body.appendChild(redScreen);
 
 let pipesPassed = 0;
-
-// Yüksek skoru kaydet ve güncelle
-function updateHighScore(currentScore) {
-    let highScore = parseInt(localStorage.getItem('highScore')) || 0;
-    if (currentScore > highScore) {
-        localStorage.setItem('highScore', currentScore);
-        high_score_display.innerHTML = `High Score: ${currentScore}`;
-    }
-}
 
 function updateTime() {
     let now = new Date();

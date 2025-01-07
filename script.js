@@ -89,7 +89,7 @@ function resetGame() {
     startTime = new Date();
     clearInterval(difficultyTimer);
     difficultyTimer = setInterval(() => {
-        move_speed += 0.5;
+        move_speed += 1;
     }, 2000);
     requestAnimationFrame(updateTime);
     play();

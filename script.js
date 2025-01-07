@@ -21,7 +21,7 @@ let score_val = document.querySelector('.score_val');
 let message = document.querySelector('.message');
 let score_title = document.querySelector('.score_title');
 
-// Yüksek skorun gösterileceği sol alt köşe elemanı
+// Yüksek skorun gösterileceği eleman
 let high_score_display = document.createElement('div');
 high_score_display.className = 'high-score';
 high_score_display.style.position = 'fixed';
@@ -51,7 +51,7 @@ redScreen.style.backgroundColor = 'rgba(255, 0, 0, 0.5)';
 redScreen.style.display = 'none';
 document.body.appendChild(redScreen);
 
-let pipesPassed = 0; // Geçilen engellerin sayısı
+let pipesPassed = 0;
 
 function updateTime() {
     let now = new Date();
@@ -63,11 +63,9 @@ function updateTime() {
 }
 
 function resetGame() {
-    // Skoru sıfırla
     score_val.innerHTML = '0';
     pipesPassed = 0;
 
-    // Eski engelleri temizle
     document.querySelectorAll('.pipe_sprite, .heart_sprite').forEach((e) => e.remove());
 
     img.style.display = 'block';
@@ -101,6 +99,14 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
+function updateHighScore(currentScore) {
+    let highScore = parseInt(localStorage.getItem('highScore')) || 0;
+    if (currentScore > highScore) {
+        localStorage.setItem('highScore', currentScore);
+        high_score_display.innerHTML = `High Score: ${currentScore}`;
+    }
+}
+
 function play() {
     function move() {
         if (game_state != 'Play') return;
@@ -126,13 +132,8 @@ function play() {
                         hearts.removeChild(hearts.lastChild);
                         element.collided = true;
                         if (lives === 0) {
-                            // En yüksek skoru güncelle
                             let currentScore = parseInt(score_val.innerHTML);
-                            let highScore = parseInt(localStorage.getItem('highScore')) || 0;
-                            if (currentScore > highScore) {
-                                localStorage.setItem('highScore', currentScore);
-                                high_score_display.innerHTML = `High Score: ${currentScore}`;
-                            }
+                            updateHighScore(currentScore);
 
                             game_state = 'End';
                             message.innerHTML =
@@ -153,7 +154,6 @@ function play() {
 
                 element.style.left = pipe_sprite_props.left - move_speed + 'px';
 
-                // Check if bird has passed through the gap
                 if (pipe_sprite_props.right < bird_props.left && !element.passed) {
                     let upper_pipe = element.previousElementSibling;
                     if (bird_props.top > upper_pipe.getBoundingClientRect().bottom && bird_props.bottom < pipe_sprite_props.top) {

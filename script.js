@@ -21,7 +21,6 @@ let score_val = document.querySelector('.score_val');
 let message = document.querySelector('.message');
 let score_title = document.querySelector('.score_title');
 
-// Yüksek skorun gösterileceği eleman
 let high_score_display = document.createElement('div');
 high_score_display.className = 'high-score';
 high_score_display.style.position = 'fixed';
@@ -29,8 +28,13 @@ high_score_display.style.bottom = '10px';
 high_score_display.style.left = '10px';
 high_score_display.style.fontSize = '20px';
 high_score_display.style.color = 'white';
-high_score_display.innerHTML = `High Score: ${localStorage.getItem('highScore') || 0}`;
 document.body.appendChild(high_score_display);
+
+// Yüksek skoru göster
+document.addEventListener('DOMContentLoaded', () => {
+    let highScore = parseInt(localStorage.getItem('highScore')) || 0;
+    high_score_display.innerHTML = `High Score: ${highScore}`;
+});
 
 let game_state = 'Start';
 img.style.display = 'none';
@@ -52,6 +56,15 @@ redScreen.style.display = 'none';
 document.body.appendChild(redScreen);
 
 let pipesPassed = 0;
+
+// Yüksek skoru kaydet ve güncelle
+function updateHighScore(currentScore) {
+    let highScore = parseInt(localStorage.getItem('highScore')) || 0;
+    if (currentScore > highScore) {
+        localStorage.setItem('highScore', currentScore);
+        high_score_display.innerHTML = `High Score: ${currentScore}`;
+    }
+}
 
 function updateTime() {
     let now = new Date();
@@ -98,14 +111,6 @@ document.addEventListener('keydown', (e) => {
         resetGame();
     }
 });
-
-function updateHighScore(currentScore) {
-    let highScore = parseInt(localStorage.getItem('highScore')) || 0;
-    if (currentScore > highScore) {
-        localStorage.setItem('highScore', currentScore);
-        high_score_display.innerHTML = `High Score: ${currentScore}`;
-    }
-}
 
 function play() {
     function move() {

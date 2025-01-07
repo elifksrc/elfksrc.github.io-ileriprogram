@@ -21,6 +21,7 @@ let score_val = document.querySelector('.score_val');
 let message = document.querySelector('.message');
 let score_title = document.querySelector('.score_title');
 
+// Yüksek skorun gösterileceği sol alt köşe elemanı
 let high_score_display = document.createElement('div');
 high_score_display.className = 'high-score';
 high_score_display.style.position = 'fixed';
@@ -28,34 +29,8 @@ high_score_display.style.bottom = '10px';
 high_score_display.style.left = '10px';
 high_score_display.style.fontSize = '20px';
 high_score_display.style.color = 'white';
+high_score_display.innerHTML = `High Score: ${localStorage.getItem('highScore') || 0}`;
 document.body.appendChild(high_score_display);
-
-// Yüksek skoru sunucudan al
-function loadHighScore() {
-    fetch('http://localhost:3000/highscore')
-        .then(response => response.json())
-        .then(data => {
-            high_score_display.innerHTML = `High Score: ${data.highScore}`;
-        })
-        .catch(error => console.error('Error fetching high score:', error));
-}
-
-// Yüksek skoru sunucuya gönder ve güncelle
-function updateHighScore(currentScore) {
-    fetch('http://localhost:3000/highscore', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ score: currentScore })
-    })
-        .then(response => response.json())
-        .then(data => {
-            high_score_display.innerHTML = `High Score: ${data.highScore}`;
-        })
-        .catch(error => console.error('Error updating high score:', error));
-}
-
-// Sayfa yüklendiğinde yüksek skoru yükle
-document.addEventListener('DOMContentLoaded', loadHighScore);
 
 let game_state = 'Start';
 img.style.display = 'none';
@@ -76,7 +51,7 @@ redScreen.style.backgroundColor = 'rgba(255, 0, 0, 0.5)';
 redScreen.style.display = 'none';
 document.body.appendChild(redScreen);
 
-let pipesPassed = 0;
+let pipesPassed = 0; // Geçilen engellerin sayısı
 
 function updateTime() {
     let now = new Date();
@@ -88,9 +63,11 @@ function updateTime() {
 }
 
 function resetGame() {
+    // Skoru sıfırla
     score_val.innerHTML = '0';
     pipesPassed = 0;
 
+    // Eski engelleri temizle
     document.querySelectorAll('.pipe_sprite, .heart_sprite').forEach((e) => e.remove());
 
     img.style.display = 'block';
@@ -149,8 +126,13 @@ function play() {
                         hearts.removeChild(hearts.lastChild);
                         element.collided = true;
                         if (lives === 0) {
+                            // En yüksek skoru güncelle
                             let currentScore = parseInt(score_val.innerHTML);
-                            updateHighScore(currentScore);
+                            let highScore = parseInt(localStorage.getItem('highScore')) || 0;
+                            if (currentScore > highScore) {
+                                localStorage.setItem('highScore', currentScore);
+                                high_score_display.innerHTML = `High Score: ${currentScore}`;
+                            }
 
                             game_state = 'End';
                             message.innerHTML =
@@ -171,6 +153,7 @@ function play() {
 
                 element.style.left = pipe_sprite_props.left - move_speed + 'px';
 
+                // Check if bird has passed through the gap
                 if (pipe_sprite_props.right < bird_props.left && !element.passed) {
                     let upper_pipe = element.previousElementSibling;
                     if (bird_props.top > upper_pipe.getBoundingClientRect().bottom && bird_props.bottom < pipe_sprite_props.top) {

@@ -30,51 +30,32 @@ high_score_display.style.fontSize = '20px';
 high_score_display.style.color = 'white';
 document.body.appendChild(high_score_display);
 
-// IndexedDB ile yüksek skor veritabanını oluşturma
-let db;
-let request = indexedDB.open('HighScoreDB', 1);
-request.onupgradeneeded = function(event) {
-    db = event.target.result;
-    let objectStore = db.createObjectStore('scores', { keyPath: 'id' });
-    objectStore.transaction.oncomplete = function(event) {
-        let scoreObjectStore = db.transaction('scores', 'readwrite').objectStore('scores');
-        scoreObjectStore.add({ id: 'highScore', value: 0 });
-    };
-};
-
-request.onsuccess = function(event) {
-    db = event.target.result;
-    loadHighScore();
-};
-
-request.onerror = function(event) {
-    console.error('IndexedDB hatası:', event.target.errorCode);
-};
-
+// Yüksek skoru sunucudan al
 function loadHighScore() {
-    let transaction = db.transaction('scores', 'readonly');
-    let objectStore = transaction.objectStore('scores');
-    let request = objectStore.get('highScore');
-    request.onsuccess = function(event) {
-        let highScore = event.target.result ? event.target.result.value : 0;
-        high_score_display.innerHTML = `High Score: ${highScore}`;
-    };
+    fetch('http://localhost:3000/highscore')
+        .then(response => response.json())
+        .then(data => {
+            high_score_display.innerHTML = `High Score: ${data.highScore}`;
+        })
+        .catch(error => console.error('Error fetching high score:', error));
 }
 
+// Yüksek skoru sunucuya gönder ve güncelle
 function updateHighScore(currentScore) {
-    let transaction = db.transaction('scores', 'readwrite');
-    let objectStore = transaction.objectStore('scores');
-    let request = objectStore.get('highScore');
-    request.onsuccess = function(event) {
-        let highScore = event.target.result ? event.target.result.value : 0;
-        if (currentScore > highScore) {
-            let updateRequest = objectStore.put({ id: 'highScore', value: currentScore });
-            updateRequest.onsuccess = function() {
-                high_score_display.innerHTML = `High Score: ${currentScore}`;
-            };
-        }
-    };
+    fetch('http://localhost:3000/highscore', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ score: currentScore })
+    })
+        .then(response => response.json())
+        .then(data => {
+            high_score_display.innerHTML = `High Score: ${data.highScore}`;
+        })
+        .catch(error => console.error('Error updating high score:', error));
 }
+
+// Sayfa yüklendiğinde yüksek skoru yükle
+document.addEventListener('DOMContentLoaded', loadHighScore);
 
 let game_state = 'Start';
 img.style.display = 'none';

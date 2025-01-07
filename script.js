@@ -30,43 +30,51 @@ high_score_display.style.fontSize = '20px';
 high_score_display.style.color = 'white';
 document.body.appendChild(high_score_display);
 
-// Çerez oluşturma fonksiyonu
-function setCookie(name, value, days) {
-    let expires = "";
-    if (days) {
-        let date = new Date();
-        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-        expires = "; expires=" + date.toUTCString();
-    }
-    document.cookie = name + "=" + (value || "") + expires + "; path=/";
+// IndexedDB ile yüksek skor veritabanını oluşturma
+let db;
+let request = indexedDB.open('HighScoreDB', 1);
+request.onupgradeneeded = function(event) {
+    db = event.target.result;
+    let objectStore = db.createObjectStore('scores', { keyPath: 'id' });
+    objectStore.transaction.oncomplete = function(event) {
+        let scoreObjectStore = db.transaction('scores', 'readwrite').objectStore('scores');
+        scoreObjectStore.add({ id: 'highScore', value: 0 });
+    };
+};
+
+request.onsuccess = function(event) {
+    db = event.target.result;
+    loadHighScore();
+};
+
+request.onerror = function(event) {
+    console.error('IndexedDB hatası:', event.target.errorCode);
+};
+
+function loadHighScore() {
+    let transaction = db.transaction('scores', 'readonly');
+    let objectStore = transaction.objectStore('scores');
+    let request = objectStore.get('highScore');
+    request.onsuccess = function(event) {
+        let highScore = event.target.result ? event.target.result.value : 0;
+        high_score_display.innerHTML = `High Score: ${highScore}`;
+    };
 }
 
-// Çerez okuma fonksiyonu
-function getCookie(name) {
-    let nameEQ = name + "=";
-    let ca = document.cookie.split(';');
-    for (let i = 0; i < ca.length; i++) {
-        let c = ca[i];
-        while (c.charAt(0) === ' ') c = c.substring(1, c.length);
-        if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
-    }
-    return null;
-}
-
-// Yüksek skoru güncelle
 function updateHighScore(currentScore) {
-    let highScore = parseInt(getCookie('highScore')) || 0;
-    if (currentScore > highScore) {
-        setCookie('highScore', currentScore, 365);
-        high_score_display.innerHTML = `High Score: ${currentScore}`;
-    }
+    let transaction = db.transaction('scores', 'readwrite');
+    let objectStore = transaction.objectStore('scores');
+    let request = objectStore.get('highScore');
+    request.onsuccess = function(event) {
+        let highScore = event.target.result ? event.target.result.value : 0;
+        if (currentScore > highScore) {
+            let updateRequest = objectStore.put({ id: 'highScore', value: currentScore });
+            updateRequest.onsuccess = function() {
+                high_score_display.innerHTML = `High Score: ${currentScore}`;
+            };
+        }
+    };
 }
-
-// Sayfa yüklendiğinde yüksek skoru göster
-document.addEventListener('DOMContentLoaded', () => {
-    let highScore = parseInt(getCookie('highScore')) || 0;
-    high_score_display.innerHTML = `High Score: ${highScore}`;
-});
 
 let game_state = 'Start';
 img.style.display = 'none';
